@@ -24,7 +24,7 @@ const client = (replyToken, SendMessageObject) => {
         headers: {
             'Content-Type': 'application/json; charset=UTF-8',
             'X-Line-Signature': SIGNATURE,
-            'Authorization': `Bearer ${CH_ACCESS_TOKEN}`,
+            'Authorization': `Bearer {FtuYSePr3kx53fOJDYkP53ic+dbwoF2/VM+A1cBbFLaBkjL+o0aFTKZW/OAwVRPUKHiyxb81aYZQ4Mdl/WeWk1SofCWueoZtVH4SbKeMpKib5Z+RVIo4aN0NN250LW1PuSF7WjHCIAR95RpJXE3EJwdB04t89/1O/w1cDnyilFU=}`,
             'Content-Length': Buffer.byteLength(postDataStr)
         }
     };
