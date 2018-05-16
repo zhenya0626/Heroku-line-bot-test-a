@@ -1,133 +1,90 @@
-var express = require('express');
-var app = express();
-var bodyParser = require('body-parser');
-var request = require('request');
-var crypto = require("crypto");
-var async = require('async');
+'use strict';
 
-app.set('port', (process.env.PORT || 8000));
-// JSONの送信を許可
-app.use(bodyParser.urlencoded({
-    extended: true
-}));
-// JSONのパースを楽に（受信時）
-app.use(bodyParser.json());
+const http = require('http');
+const https = require('https');
+const crypto = require('crypto');
 
-app.post('/callback', function(req, res) {
-    async.waterfall([
-            function(callback) {
-                // テキストが送られてきた場合のみ返事をする
-                if ((req.body['events'][0]['type'] != 'message')
-                    || (req.body['events'][0]['message']['type'] != 'text')) {
-                    return;
-                }
+const HOST = 'api.line.me'; 
+const REPLY_PATH = '/v2/bot/message/reply';//リプライ用
+const CH_SECRET = 'xxxxxxxx'; //Channel Secretを指定
+const CH_ACCESS_TOKEN = 'xxxxxx'; //Channel Access Tokenを指定
+const SIGNATURE = crypto.createHmac('sha256', CH_SECRET);
+const PORT = 3000;
 
-                // 検索キーワード
-                var input_array = req.body['events'][0]['message']['text'].split("\n");
-                var address = input_array[0];
-                var freeword = input_array[1];
-
-                // ぐるなび リクエストパラメータの設定
-                var gnavi_query = {
-                    "keyid":process.env.GNAVI_ACCESS_KEY,
-                    "format":"json",
-                    "address":address,
-                    "hit_per_page":1,
-                    "freeword":freeword,
-                    "freeword_condition":2
-                };
-
-                // ぐるなびAPI レストラン検索API
-                var gnavi_url = 'https://api.gnavi.co.jp/RestSearchAPI/20150630/';
-
-                var gnavi_options = {
-                    url: gnavi_url,
-                    headers : {'Content-Type' : 'application/json; charset=UTF-8'},
-                    qs: gnavi_query,
-                    json: true
-                };
-
-                // 検索結果をオブジェクト化
-                var search_result = {};
-
-                request.get(gnavi_options, function (error, response, body) {
-                    if (!error && response.statusCode == 200) {
-                        if('error' in body){
-                            console.log("検索エラー" + JSON.stringify(body));
-                            return;
-                        }
-                        // 店名
-                        if('name' in body.rest){
-                            search_result['name'] = body.rest.name;
-                        }
-                        // 住所
-                        if('address' in body.rest){
-                            search_result['address'] = body.rest.address;
-                        }
-                        // 緯度
-                        if('latitude' in body.rest){
-                            search_result['latitude'] = body.rest.latitude;
-                        }
-                        // 軽度
-                        if('longitude' in body.rest){
-                            search_result['longitude'] = body.rest.longitude;
-                        }
-                        // 営業時間
-                        if('opentime' in body.rest){
-                            search_result['opentime'] = body.rest.opentime;
-                        }
-                        callback(null, search_result);
-                    } else {
-                        console.log('error: '+ response.statusCode);
-                    }
-                });
-            },
-        ],
-        function(err, search_result) {
-            //ヘッダーを定義
-            var headers = {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer {' + process.env.LINE_CHANNEL_ACCESS_TOKEN + '}',
-            };
-            var data = {
-                'replyToken': req.body['events'][0]['replyToken'],
-                "messages": [
-                    // テキスト
-                    {
-                        "type":"text",
-                        "text": 'こちらはいかがですか？\n【お店】' + search_result['name'] + '\n【営業時間】' + search_result['opentime'],
-                    },
-                    // 位置情報
-                    {
-                        "type":"location",
-                        "title":search_result['name'],
-                        "address":search_result['address'],
-                        "latitude": Number(search_result['latitude']),
-                        "longitude": Number(search_result['longitude'])
-                    }
-                ]
-            };
-
-            //オプションを定義
-            var options = {
-                url: 'https://api.line.me/v2/bot/message/reply',
-                proxy: process.env.FIXIE_URL,
-                headers: headers,
-                json: true,
-                body: data
-            };
-
-            request.post(options, function(error, response, body) {
-                if (!error && response.statusCode == 200) {
-                    console.log(body);
-                } else {
-                    console.log('error: ' + JSON.stringify(response));
-                }
-            });
+/**
+ * httpリクエスト部分
+ */
+const client = (replyToken, SendMessageObject) => {    
+    let postDataStr = JSON.stringify({ replyToken: replyToken, messages: SendMessageObject });
+    let options = {
+        host: HOST,
+        port: 443,
+        path: REPLY_PATH,
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json; charset=UTF-8',
+            'X-Line-Signature': SIGNATURE,
+            'Authorization': `Bearer ${CH_ACCESS_TOKEN}`,
+            'Content-Length': Buffer.byteLength(postDataStr)
         }
-    );
-});
+    };
 
-app.listen(app.get('port'), function() {
-    console.log('Node app is running');
-});
+    return new Promise((resolve, reject) => {
+        let req = https.request(options, (res) => {
+                    let body = '';
+                    res.setEncoding('utf8');
+                    res.on('data', (chunk) => {
+                        body += chunk;
+                    });
+                    res.on('end', () => {
+                        resolve(body);
+                    });
+        });
+
+        req.on('error', (e) => {
+            reject(e);
+        });
+        req.write(postDataStr);
+        req.end();
+    });
+};
+
+http.createServer((req, res) => {    
+    if(req.url !== '/' || req.method !== 'POST'){
+        res.writeHead(200, {'Content-Type': 'text/plain'});
+        res.end('');
+    }
+
+    let body = '';
+    req.on('data', (chunk) => {
+        body += chunk;
+    });        
+    req.on('end', () => {
+        if(body === ''){
+          console.log('bodyが空です。');
+          return;
+        }
+
+        let WebhookEventObject = JSON.parse(body).events[0];        
+        //メッセージが送られて来た場合
+        if(WebhookEventObject.type === 'message'){
+            let SendMessageObject;
+            if(WebhookEventObject.message.type === 'text'){
+                SendMessageObject = [{
+                    type: 'text',
+                    text: WebhookEventObject.message.text
+                }];
+            }
+            client(WebhookEventObject.replyToken, SendMessageObject)
+            .then((body)=>{
+                console.log(body);
+            },(e)=>{console.log(e)});
+        }
+
+        res.writeHead(200, {'Content-Type': 'text/plain'});
+        res.end('success');
+    });
+
+}).listen(PORT);
+
+console.log(`Server running at ${PORT}`);
