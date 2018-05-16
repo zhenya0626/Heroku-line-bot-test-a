@@ -85,6 +85,6 @@ http.createServer((req, res) => {
         res.end('success');
     });
 
-}).listen(PORT);
+}).listen(process.env.PORT || 8080);
 
 console.log(`Server running at ${PORT}`);
