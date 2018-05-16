@@ -7,7 +7,7 @@ const crypto = require('crypto');
 const HOST = 'api.line.me'; 
 const REPLY_PATH = '/v2/bot/message/reply';//リプライ用
 const CH_SECRET = 'bc7d4dcadfed59988d014082bd5a46ee'; //Channel Secretを指定
-const CH_ACCESS_TOKEN = 'FtuYSePr3kx53fOJDYkP53ic+dbwoF2/VM+A1cBbFLaBkjL+o0aFTKZW/OAwVRPUKHiyxb81aYZQ4Mdl/WeWk1SofCWueoZtVH4SbKeMpKib5Z+RVIo4aN0NN250LW1PuSF7WjHCIAR95RpJXE3EJwdB04t89/1O/w1cDnyilFU='; //Channel Access Tokenを指定
+const CH_ACCESS_TOKEN = 'lUZF7+QLCwbNu4dONhfI9V9Ov+BHIIYOT7LwAspY0+6rb/+AiNCfGR7tjtLUXzysKHiyxb81aYZQ4Mdl/WeWk1SofCWueoZtVH4SbKeMpKihhZRxwRsBb+MmuLwpzJBu1VYzdWf0R2FWbkOkqJMslAdB04t89/1O/w1cDnyilFU='; //Channel Access Tokenを指定
 const SIGNATURE = crypto.createHmac('sha256', CH_SECRET);
 const PORT = 3000;
 
