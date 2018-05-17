@@ -11,7 +11,7 @@ const CH_ACCESS_TOKEN = 'lUZF7+QLCwbNu4dONhfI9V9Ov+BHIIYOT7LwAspY0+6rb/+AiNCfGR7
 const SIGNATURE = crypto.createHmac('sha256', CH_SECRET);
 const PORT = process.env.PORT || 8080;
 
-/**
+/*
  * httpリクエスト部分
  */
 const client = (replyToken, SendMessageObject) => {    
@@ -89,7 +89,6 @@ http.createServer((req, res) => {
             .then((body)=>{
                 console.log(body);
             },(e)=>{console.log(e)});
-            
         }
 
         res.writeHead(200, {'Content-Type': 'text/plain'});
