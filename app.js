@@ -80,6 +80,7 @@ http.createServer((req, res) => {
                 console.log(body);
             },(e)=>{console.log(e)});
         }else if(WebhookEventObject.type === 'beacon'){
+            console.log('beaconイベントが検出されました');
             let SendMessageObject;
                 SendMessageObject = [{
                     type: 'text',
