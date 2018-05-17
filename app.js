@@ -79,6 +79,17 @@ http.createServer((req, res) => {
             .then((body)=>{
                 console.log(body);
             },(e)=>{console.log(e)});
+        }else if(WebhookEventObject.type === 'beacon'){
+            let SendMessageObject;
+                SendMessageObject = [{
+                    type: 'text',
+                    text: '電気消して'
+                }];
+            client(WebhookEventObject.replyToken, SendMessageObject)
+            .then((body)=>{
+                console.log(body);
+            },(e)=>{console.log(e)});
+            
         }
 
         res.writeHead(200, {'Content-Type': 'text/plain'});
