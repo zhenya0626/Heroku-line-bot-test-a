@@ -79,12 +79,14 @@ http.createServer((req, res) => {
             .then((body)=>{
                 console.log(body);
             },(e)=>{console.log(e)});
+            
         }else if(WebhookEventObject.type === 'beacon'){
             console.log('beaconイベントが検出されました');
+            console.log(WebhookEventObject.beacon.type);
             let SendMessageObject;
                 SendMessageObject = [{
                     type: 'text',
-                    text: '電気消して'
+                    text: WebhookEventObject.beacon.type
                 }];
             client(WebhookEventObject.replyToken, SendMessageObject)
             .then((body)=>{
